@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  
+  <!-- BIBLIOTECAS CARREGADAS INDEPENDENTEMENTE -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  
+  <style>
+    /* TEMA MICROSOFT WORD / OFFICE FLUENT DESIGN */
+    :root {
+      --primary: #2B579A; /* Azul Word */
+      --primary-dark: #18407A;
+      --primary-light: #EFF3F8;
+      --bg: #F3F2F1; /* Cinza Office */
+      --card-bg: #ffffff;
+      --text: #323130;
+      --text-light: #605E5C;
+      --border: #D2D0CE;
+      --border-light: #EDEBE9;
+      --radius: 2px; /* Padrão Windows/Office (quase reto) */
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', 'Calibri', 'Arial', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    
+    header { 
+      background: var(--primary); 
+      padding: 0.75rem 2rem; 
+      border-bottom: 1px solid var(--primary-dark);
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header h1 { font-size: 1.1rem; color: white; font-weight: 600; letter-spacing: 0.5px; }
+    header h1 a { color: white; text-decoration: none; }
+    header a { color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 500; font-size: 0.85rem; cursor: pointer; padding: 0.4rem 0.8rem; border-radius: 2px; transition: background 0.2s; }
+    header a:hover { background: rgba(255,255,255,0.15); color: white; }
+
+    .container { max-width: 1080px; margin: 2rem auto; padding: 0 1.5rem; }
+    
+    .hero { text-align: center; padding: 3rem 1rem 2rem; margin-bottom: 1.5rem; }
+    .hero h2 { font-size: 2.2rem; margin-bottom: 0.5rem; color: var(--text); font-weight: 300; letter-spacing: -0.5px; }
+    .hero h2 strong { font-weight: 600; color: var(--primary); }
+    .hero p { color: var(--text-light); margin-bottom: 1.5rem; font-size: 1.05rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .badges { display: flex; justify-content: center; gap: 1.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-light); flex-wrap: wrap; }
+    .badges span { display: flex; align-items: center; gap: 0.4rem; }
+    
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+    .feature-card { 
+      background: var(--card-bg); 
+      padding: 1.5rem; 
+      border-radius: var(--radius); 
+      border: 1px solid var(--border-light); 
+      border-left: 4px solid transparent; 
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+      cursor: pointer; 
+      position: relative; 
+      overflow: hidden; 
+    }
+    .feature-card:hover { 
+      border-left: 4px solid var(--primary); 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05); 
+      transform: translateY(-2px); 
+    }
+    .feature-card h3 { margin-bottom: 0.5rem; font-size: 1.15rem; color: var(--text); font-weight: 600; }
+    .feature-card p { font-size: 0.9rem; color: var(--text-light); margin-bottom: 1rem; line-height: 1.4; }
+    .feature-link { color: var(--primary); font-weight: 600; font-size: 0.85rem; text-decoration: none; display: inline-block; }
+
+    .tool-section { display: none; animation: fadeIn 0.3s ease; }
+    .tool-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .panel { 
+      background: var(--card-bg); 
+      padding: 2rem; 
+      border-radius: var(--radius); 
+      border: 1px solid var(--border-light); 
+      box-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,0.132),0 0.3px 0.9px 0 rgba(0,0,0,0.108); 
+    }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem; }
+    .panel-header h2 { font-size: 1.4rem; font-weight: 600; color: var(--text); }
+
+    .split-view { display: grid; grid-template-columns: 55% 45%; gap: 2.5rem; }
+    @media (max-width: 850px) { .split-view { grid-template-columns: 1fr; } }
+    
+    .form-side { background: #faf9f8; padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border-light); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+    @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+    .field { margin-bottom: 0; }
+    .form-grid .field { margin-bottom: 0; }
+    .field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 0.4rem; }
+    
+    /* INPUTS GERAIS */
+    .field input, .field select { 
+      width: 100%; 
+      padding: 0.6rem 0.75rem; 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius); 
+      font-size: 0.95rem; 
+      font-family: inherit; 
+      transition: all 0.15s ease; 
+      background: #fff; 
+    }
+    .field input:focus, .field select:focus { 
+      outline: none; 
+      border-color: var(--primary); 
+      box-shadow: 0 0 0 1px var(--primary); 
+    }
+
+    /* INPUTS DO RECIBO (QUADRADOS) */
+    #tool-recibo .form-grid input, 
+    #tool-recibo .form-grid select {
+      border-radius: 0 !important;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 0.65rem 0.75rem;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    }
+    #tool-recibo .form-grid input:focus, 
+    #tool-recibo .form-grid select:focus {
+      border-color: var(--primary);
+      outline: 1px solid var(--primary);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    button.btn { 
+      padding: 0.55rem 1.2rem; 
+      border: 1px solid transparent; 
+      border-radius: var(--radius); 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: all 0.15s ease; 
+      font-size: 0.9rem; 
+      font-family: inherit; 
+    }
+    .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+    .btn-secondary { background: white; border: 1px solid var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #F3F2F1; border-color: #605E5C; }
+
+    .preview-container { position: sticky; top: 80px; }
+    .preview-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-light); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px; }
+    
+    #recibo-preview {
+      background: white; 
+      padding: 1.5cm; 
+      width: 100%; 
+      min-height: 297mm;
+      border: 1px solid #d1d1d1; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 1px 5px rgba(0,0,0,0.08); 
+      font-family: 'Times New Roman', Times, serif; 
+      font-size: 12pt; 
+      line-height: 1.6; 
+      color: #000; 
+      text-align: justify; 
+      word-wrap: break-word; 
+      overflow-wrap: break-word;
+    }
+    .r-titulo { text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 1px; }
+    .r-valor { font-weight: bold; }
+    .r-data { margin-top: 3rem; text-align: right; font-style: italic; }
+    .r-assinatura { margin-top: 4rem; text-align: center; width: 60%; margin-left: auto; margin-right: auto; border-top: 1px solid #000; padding-top: 0.5rem; font-size: 10pt; }
+
+    .drop-zone { 
+      border: 1px dashed var(--border); 
+      border-radius: var(--radius); 
+      padding: 3rem; 
+      text-align: center; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+      margin-bottom: 1.5rem; 
+      background: #fcfcfc; 
+    }
+    .drop-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+    .file-input { display: none; }
+    
+    #word-preview-content {
+        background: white; padding: 2cm; min-height: 297mm;
+        border: 1px solid #d1d1d1; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-family: 'Times New Roman', serif;
+        font-size: 12pt; line-height: 1.5; color: #000; text-align: justify;
+        word-wrap: break-word; overflow-wrap: break-word;
+    }
+    #word-preview-content h1, #word-preview-content h2, #word-preview-content h3 { margin-top: 1em; margin-bottom: 0.5em; color: #000; }
+    #word-preview-content p { margin-bottom: 1em; }
+    #word-preview-content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    #word-preview-content td, #word-preview-content th { border: 1px solid #ccc; padding: 8px; }
+    .word-preview-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .btn-print-native { background: var(--text); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 2px; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 600; transition: background 0.2s; }
+    .btn-print-native:hover { background: #000; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(50,49,48,0.6); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; z-index: 1000; visibility: hidden; opacity: 0; transition: all 0.2s; }
+    .modal-overlay.active { visibility: visible; opacity: 1; }
+    .modal { 
+      background: white; 
+      padding: 1.5rem 2rem; 
+      border-radius: var(--radius); 
+      width: 90%; 
+      max-width: 450px; 
+      text-align: left; 
+      position: relative; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+      max-height: 95vh; 
+      overflow-y: auto; 
+      border-top: 4px solid var(--primary);
+    }
+    .close-modal { 
+      position: absolute; 
+      top: 0.75rem; 
+      right: 0.75rem; 
+      background: none; 
+      border: none; 
+      font-size: 1.5rem; 
+      cursor: pointer; 
+      color: var(--text-light); 
+      line-height: 1; 
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+    }
+    .close-modal:hover { background: #f3f2f1; color: var(--text); }
+    .pix-box { background: #f3f9f1; border: 1px solid #d4e8ce; padding: 1.25rem; border-radius: var(--radius); margin: 1.5rem 0; }
+    .pix-code { background: #f3f2f1; padding: 0.85rem; border-radius: var(--radius); font-family: monospace; font-size: 0.65rem; word-break: break-all; margin: 0.75rem 0; color: #323130; border: 1px solid var(--border); max-height: 120px; overflow-y: auto; }
+    .btn-pix { background: #107c10; color: white; width: 100%; margin-bottom: 0.75rem; font-weight: 600; border-color: #107c10; }
+    .btn-pix:hover { background: #0b5e0b; border-color: #0b5e0b; }
+    
+    .qr-container { 
+      background: white; 
+      padding: 1rem; 
+      border-radius: var(--radius); 
+      margin: 1rem 0; 
+      display: inline-block; 
+      border: 2px solid #107c10;
+    }
+    .qr-code-img { 
+      width: 140px; 
+      height: 140px; 
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    footer { text-align: center; padding: 3rem 1rem; color: var(--text-light); font-size: 0.85rem; border-top: 1px solid var(--border-light); margin-top: 4rem; }
+
+    /* Estilos da ferramenta de Imagens para PDF */
+    .img-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .img-card {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      user-select: none;
+      transition: all 0.2s;
+    }
+    .img-card.dragging {
+      opacity: 0.5;
+      border: 2px dashed var(--primary);
+    }
+    .img-card:hover {
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border-color: var(--primary);
+    }
+    .img-card img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .img-card .delete-img {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(232, 17, 35, 0.9);
+      color: white;
+      border: none;
+      border-radius: 2px;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      transition: transform 0.2s;
+      z-index: 5;
+    }
+    .img-card .delete-img:hover {
+      transform: scale(1.1);
+      background: #a4262c;
+    }
+    .img-card .img-index {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      background: rgba(50, 49, 48, 0.8);
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-weight: 600;
+    }
+    .img-card .reorder-controls {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      right: 5px;
+      display: flex;
+      justify-content: space-between;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .img-card:hover .reorder-controls {
+      opacity: 1;
+    }
+    .reorder-btn {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      width: 26px;
+      height: 20px;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+    }
+    .reorder-btn:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+    .progress-container {
+      width: 100%;
+      background-color: var(--border-light);
+      border-radius: 2px;
+      height: 4px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: var(--primary);
+      transition: width 0.1s ease;
+    }
+
+    /* BOTÃO FLUTUANTE DE IMPRESSÃO PARA CELULAR */
+    .fab-print {
+      display: none; /* Fica escondido no PC */
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: var(--primary);
+      color: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      z-index: 999;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .fab-print:active {
+      transform: scale(0.9);
+    }
+    @media (max-width: 768px) {
+      .fab-print {
+        display: flex; /* Mostra apenas em telas de celular/tablet */
+      }
+    }
+
+    @media screen {
+      .hidden-screen { display: none !important; }
+    }
+
+    /* REGRAS DE IMPRESSÃO (SEM URL/CAMINHO NO RODAPÉ) */
+    @media print {
+      @page { size: A4; margin: 0; } /* MARGEM 0 OCULTA O CABEÇALHO E RODAPÉ DO NAVEGADOR */
+      body * { visibility: hidden; }
+      
+      #img-print-area, #img-print-area * { visibility: visible; }
+      #img-print-area.print-target {
+        position: absolute; left: 0; top: 0; width: 100%;
+        margin: 0; padding: 0; border: none; box-shadow: none;
+        background: white; min-height: auto; display: block !important;
+      }
+      .print-page-image {
+        page-break-after: always;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        display: block;
+        text-align: center;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      .print-page-image:last-child {
+        page-break-after: avoid;
+      }
+      .print-page-image.fit-contain img {
+        max-width: 100%;
+        max-height: 98vh;
+        object-fit: contain;
+      }
+      .print-page-image.fit-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      
+      #recibo-preview, #recibo-preview * { visibility: visible; }
+      #recibo-preview.print-target {
+        position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+        margin: 0; padding: 2cm; border: none; box-shadow: none;
+        background: white; min-height: auto;
+        font-size: 12pt !important; line-height: 1.5 !important; text-align: justify !important;
+      }
+      
+      #word-preview-content, #word-preview-content * { visibility: visible; }
+      #word-preview-content.print-target {
+        position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+        margin: 0; padding: 2cm; border: none; box-shadow: none;
+        background: white; min-height: auto;
+        font-size: 12pt !important; line-height: 1.5 !important; text-align: justify !important;
+      }
+      
+      header, footer, .modal-overlay, .panel-header, .back-btn,
+      .drop-zone, .form-side, .actions,
+      .word-preview-actions, .preview-label, .hero, .features,
+      #home-view, #tool-imagens, .fab-print { display: none !important; }
+
+      .container { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><a href="#" onclick="showHome()">📄 PDF Tools</a></h1>
+    <!-- ADICIONADO ID PARA CONTROLAR A VISIBILIDADE -->
+    <a id="btn-voltar-menu" onclick="showHome()" style="display: none;">← Voltar ao Menu</a>
+  </header>
+
+  <div class="container">
+    
+    <div id="home-view">
+      <section class="hero">
+        <h2>Suite <strong>Gratuita</strong></h2>
+        <p>Transforme seus documentos instantaneamente. Gere recibos profissionais, converta Word para PDF e una imagens. Tudo processado localmente no seu navegador.</p>
+        <div class="badges">
+          <span>✓ Sem marcas d'água</span>
+          <span>🔒 Privacidade Total</span>
+          <span>💻 Processamento Local</span>
+        </div>
+      </section>
+
+      <div class="features">
+        <div class="feature-card" onclick="openTool('recibo')">
+          <h3>📝 Emissor de Recibos</h3>
+          <p>Crie recibos validados juridicamente com preview em tempo real e exportação PDF.</p>
+          <span class="feature-link">Acessar Ferramenta →</span>
+        </div>
+        <div class="feature-card" onclick="openTool('word')">
+          <h3>📄 Word para PDF</h3>
+          <p>Conversão fiel de documentos .docx preservando formatação, tabelas e estilos.</p>
+          <span class="feature-link">Acessar Ferramenta →</span>
+        </div>
+        <div class="feature-card" onclick="openTool('imagens')">
+          <h3>🖼️ Imagens para PDF</h3>
+          <p>Compile múltiplas fotos ou scans em um único documento organizado e leve.</p>
+          <span class="feature-link">Acessar Ferramenta →</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FERRAMENTA RECIBO -->
+    <div id="tool-recibo" class="tool-section">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Gerador de Recibos Profissional</h2>
+        </div>
+        
+        <div class="split-view">
+          <div class="form-side">
+            <p style="margin-bottom:1.5rem; color:var(--text-light); font-size:0.9rem;">Preencha os dados abaixo e visualize o resultado em tempo real.</p>
+            <div class="form-grid">
+              <div class="field"><label>Nome / Empresa (Quem recebe)</label><input type="text" id="emissor" placeholder="Seu nome ou empresa"></div>
+              <div class="field"><label>CPF / CNPJ (Quem recebe)</label><input type="text" id="cpfEmissor" placeholder="000.000.000-00" maxlength="18" oninput="mascaraDoc(this)"></div>
+              <div class="field"><label>Empresa / Cliente (Quem paga)</label><input type="text" id="cliente" placeholder="Nome do pagador"></div>
+              <div class="field"><label>CPF / CNPJ (Quem paga)</label><input type="text" id="cpfCliente" placeholder="000.000.000-00" maxlength="18" oninput="mascaraDoc(this)"></div>
+              <div class="field"><label>Valor (R$)</label><input type="number" step="0.01" id="valor" placeholder="0,00"></div>
+              <div class="field"><label>Data</label><input type="date" id="data"></div>
+              <div class="field" style="grid-column: span 2;"><label>Cidade</label><input type="text" id="cidade" placeholder="Ex: São Paulo"></div>
+              <div class="field" style="grid-column: span 2;"><label>Referente a</label><input type="text" id="referente" placeholder="Ex: Serviços prestados"></div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-secondary" onclick="limparForm()">Limpar Campos</button>
+            </div>
+          </div>
+
+          <div class="preview-container">
+            <div class="preview-label">
+              <span>Pré-visualização</span>
+              <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="mostrarModalDoacao('recibo-preview')">🖨️ Imprimir</button>
+            </div>
+            <div id="recibo-preview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FERRAMENTA WORD -->
+    <div id="tool-word" class="tool-section">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Conversor Word para PDF</h2>
+        </div>
+        <p style="margin-bottom:1.5rem; color:var(--text-light);">Converta documentos mantendo a formatação original.</p>
+        
+        <div class="drop-zone" onclick="document.getElementById('wordInput').click()">
+          <p style="font-size: 2rem; margin-bottom: 0.5rem;">📁</p>
+          <p><strong>Arraste ou clique para selecionar</strong></p>
+          <p style="font-size: 0.85rem; color: var(--text-light); margin-top: 0.5rem;">Suporta apenas arquivos .docx</p>
+        </div>
+        <input type="file" id="wordInput" class="file-input" accept=".docx" onchange="previewWord(this)">
+        
+        <div id="word-actions" style="display:none; margin-bottom: 1rem;">
+          <div id="word-preview-wrapper" style="display:none;">
+            <div class="word-preview-actions">
+                <span class="preview-label" style="margin:0;">Pré-visualização do Conteúdo Real</span>
+                <button class="btn-print-native" onclick="mostrarModalDoacao('word-preview-content')">🖨️ Imprimir / Salvar PDF</button>
+            </div>
+            <div id="word-preview-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FERRAMENTA IMAGENS (CORRIGIDA E RESTAURADA) -->
+    <div id="tool-imagens" class="tool-section">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Juntar Imagens em PDF</h2>
+        </div>
+        <p style="margin-bottom:1.5rem; color:var(--text-light);">Selecione várias fotos e crie um único documento organizado.</p>
+        
+        <div class="drop-zone" onclick="document.getElementById('imgInput').click()" 
+             ondragover="event.preventDefault(); this.style.borderColor='var(--primary)';" 
+             ondragleave="this.style.borderColor='';" 
+             ondrop="handleImgDrop(event)">
+          <p style="font-size: 2rem; margin-bottom: 0.5rem;">🖼️</p>
+          <p><strong>Arraste ou clique para selecionar</strong></p>
+          <p style="font-size: 0.85rem; color: var(--text-light); margin-top: 0.5rem;">JPG, PNG, WEBP (Múltipla escolha)</p>
+        </div>
+        <input type="file" id="imgInput" class="file-input" multiple accept="image/*" onchange="handleImgSelect(this)">
+        
+        <div class="progress-container" id="imgProgressContainer">
+          <div class="progress-bar" id="imgProgressBar"></div>
+        </div>
+
+        <div id="imgPreviewGrid" class="img-grid"></div>
+
+        <div class="form-grid" style="margin-bottom: 1.5rem;">
+          <div class="field">
+            <label>Orientação</label>
+            <select id="imgOrientacao">
+              <option value="retrato">📄 Retrato</option>
+              <option value="paisagem">📄 Paisagem</option>
+              <option value="automatico">🔄 Automático</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Ajuste</label>
+            <select id="imgAjuste">
+              <option value="caber">Caber na página</option>
+              <option value="preencher">Preencher página</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions" style="margin-top: 0; flex-wrap: wrap;">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="abrirAjustePagina()">📐 Ajustar Páginas</button>
+          <button class="btn btn-secondary" style="flex: 1;" onclick="abrirPreviewPdf()">👁️ Pré-visualizar PDF</button>
+          <button class="btn btn-primary" style="flex: 1;" onclick="gerarImagensPdf()">🖨️ Gerar PDF Completo</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="img-print-area" class="hidden-screen"></div>
+
+  </div>
+
+  <!-- BOTÃO FLUTUANTE DE IMPRESSÃO PARA CELULAR -->
+  <button class="fab-print" onclick="imprimirFerramentaAtual()" title="Imprimir">🖨️</button>
+
+  <!-- MODAL DE DOAÇÃO -->
+  <div id="modal-doacao" class="modal-overlay">
+    <div class="modal">
+      <button class="close-modal" onclick="fecharModalDoacao()">×</button>
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">☕</div>
+      <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 600; color: var(--text);">Antes de Imprimir...</h3>
+      <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.25rem;">Este projeto é 100% gratuito e open source. Se te ajudou, considere apoiar o desenvolvimento!</p>
+      
+      <div class="pix-box">
+        <p style="font-weight: 700; color: #107c10; font-size: 0.9rem; margin-bottom: 0.75rem;">💡 Sugestão de apoio: R$ 5,00</p>
+        
+        <div class="qr-container">
+          <img class="qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=00020126680014BR.GOV.BCB.PIX0136d3a939c9-f2ee-4eb1-9b04-dc5258422b5f0206Doacao5204000053039865802BR5917Clauston De Souza6009Sao Paulo62140510SiteRecibo63040141" alt="QR Code Pix">
+          <p style="font-size: 0.7rem; color: var(--text-light); margin-top: 0.5rem; font-weight: 500; text-align: center;">Escaneie para doar via Pix</p>
+        </div>
+        
+        <p style="font-size: 0.8rem; color: var(--text); margin: 1rem 0 0.5rem 0; font-weight: 600;">Ou use o Pix Copia e Cola:</p>
+        <div class="pix-code" id="pixCodeModal">00020126680014BR.GOV.BCB.PIX0136d3a939c9-f2ee-4eb1-9b04-dc5258422b5f0206Doacao5204000053039865802BR5917Clauston De Souza6009Sao Paulo62140510SiteRecibo63040141</div>
+        <p style="font-size: 0.7rem; color: var(--text-light); margin-bottom: 1rem;">Chave Aleatória: d3a939c9-f2ee-4eb1-9b04-dc5258422b5f</p>
+        <button class="btn btn-pix" onclick="copiarPixModal()">📋 Copiar Código Pix</button>
+      </div>
+
+      <button class="btn btn-primary" style="width: 100%; font-size: 1rem; padding: 0.75rem;" onclick="prosseguirImpressao()">🖨️ Imprimir Agora</button>
+    </div>
+  </div>
+
+  <!-- MODAL DE AJUSTE DE PÁGINAS -->
+  <div id="modal-ajuste-pagina" class="modal-overlay">
+    <div class="modal" style="width: 95%; max-width: 560px; max-height: 85vh;">
+      <button class="close-modal" onclick="fecharModalAjustePagina()">×</button>
+      <h3 style="margin-bottom: 0.35rem; font-size: 1.15rem; font-weight: 600; color: var(--text);">📐 Ajustar Páginas</h3>
+      <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 1rem;">Clique na linha entre as imagens para uni-las na mesma página ou separá-las. Assim você controla exatamente onde ocorre cada quebra de página.</p>
+      <div id="ajustePaginaInfo" style="background: var(--primary-light); color: var(--primary-dark); font-weight: 700; font-size: 0.85rem; padding: 0.6rem 0.9rem; border-radius: var(--radius); margin-bottom: 1rem; border-left: 4px solid var(--primary);"></div>
+      <div id="ajustePaginaList" style="max-height: 45vh; overflow-y: auto; padding-right: 0.5rem;"></div>
+      <div class="actions" style="margin-top: 1.5rem;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="quebrarTodas()">✂️ Separar Todas</button>
+        <button class="btn btn-secondary" style="flex:1;" onclick="juntarTodas()">🔗 Unir Todas</button>
+      </div>
+      <button class="btn btn-primary" style="width: 100%; margin-top: 0.75rem;" onclick="fecharModalAjustePagina()">Concluído</button>
+    </div>
+  </div>
+
+  <!-- MODAL DE PREVIEW DE PDF -->
+  <div id="modal-preview-pdf" class="modal-overlay">
+    <div class="modal" style="width: 95%; max-width: 800px; height: 90vh; display: flex; flex-direction: column;">
+      <button class="close-modal" onclick="fecharModalPreviewPdf()">×</button>
+      <h3 style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; color: var(--text);">Pré-visualização do PDF</h3>
+      <div style="flex: 1; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: #e2e8f0; position: relative;">
+        <div id="loadingPreview" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.95); z-index: 10; padding: 20px; text-align: center;">
+          <p style="font-weight: 600; color: var(--primary);">Gerando pré-visualização...</p>
+        </div>
+        <iframe id="pdfPreviewFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+      </div>
+      <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="fecharModalPreviewPdf()">Fechar</button>
+        <button class="btn btn-primary" onclick="fecharModalPreviewPdf(); gerarImagensPdf()">🖨️ Imprimir / Salvar Definitivo</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2026 Central de Ferramentas PDF. Todos os direitos reservados.</p>
+    <p style="margin-top: 0.5rem; opacity: 0.7;">feito por "klausdev84"</p>
+  </footer>
+
+  <script>
+    let elementoParaImpressao = null;
+
+    function showHome() {
+      document.querySelectorAll('.tool-section').forEach(el => el.classList.remove('active'));
+      document.getElementById('home-view').style.display = 'block';
+      document.getElementById('btn-voltar-menu').style.display = 'none'; // ESCONDE O BOTÃO NA HOME
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+    function openTool(tool) {
+      document.getElementById('home-view').style.display = 'none';
+      document.querySelectorAll('.tool-section').forEach(el => el.classList.remove('active'));
+      document.getElementById(`tool-${tool}`).classList.add('active');
+      document.getElementById('btn-voltar-menu').style.display = 'inline-block'; // MOSTRA O BOTÃO NAS FERRAMENTAS
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function mascaraDoc(i) {
+      let v = i.value.replace(/\D/g, "");
+      if (v.length <= 11) {
+        v = v.replace(/(\d{3})(\d)/, "$1.$2");
+        v = v.replace(/(\d{3})(\d)/, "$1.$2");
+        v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+      } else {
+        v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+        v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+        v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+        v = v.replace(/(\d{4})(\d)/, "$1-$2");
+      }
+      i.value = v.substring(0, 18);
+    }
+
+    function atualizarPreview() {
+      const emissor = document.getElementById("emissor").value || "__________________________";
+      const cpfE = document.getElementById("cpfEmissor").value || "___.___.___-__";
+      const cliente = document.getElementById("cliente").value || "__________________________";
+      const cpfC = document.getElementById("cpfCliente").value || "___.___.___-__";
+      const val = parseFloat(document.getElementById("valor").value) || 0;
+      const dataRaw = document.getElementById("data").value;
+      const cidade = document.getElementById("cidade").value || "______________";
+      const ref = document.getElementById("referente").value || "__________________________";
+
+      let dataStr = `${cidade}, ____ de ____________ de 20____`;
+      if (dataRaw) {
+        const [a, m, d] = dataRaw.split('-');
+        const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+        dataStr = `${cidade}, ${d} de ${meses[parseInt(m)-1]} de ${a}`;
+      }
+
+      const extenso = val === 0 ? "zero reais" : numExtenso(val);
+      const valFmt = val.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+      document.getElementById("recibo-preview").innerHTML = `
+        <div class="r-titulo">RECIBO</div>
+        <p style="margin-bottom: 1.5em;">Eu, <strong>${emissor}</strong>, inscrito(a) no CPF/CNPJ sob o nº <strong>${cpfE}</strong>, declaro ter recebido de <strong>${cliente}</strong>, inscrito(a) no CPF/CNPJ sob o nº <strong>${cpfC}</strong>, a importância de <span class="r-valor">R$ ${valFmt} (${extenso})</span>, referente a <strong>${ref}</strong>.</p>
+        <p style="margin-bottom: 1.5em;">Para maior clareza, firmo o presente recibo, dando plena, geral e irrevogável quitação, para nada mais reclamar a qualquer título.</p>
+        <div class="r-data">${dataStr}</div>
+        <div class="r-assinatura">ASSINATURA DO RECEBEDOR</div>
+      `;
+    }
+
+    function limparForm() {
+      ["emissor","cpfEmissor","cliente","cpfCliente","valor","data","cidade","referente"].forEach(id => document.getElementById(id).value = "");
+      atualizarPreview();
+    }
+
+    function mostrarModalDoacao(elementId) {
+      elementoParaImpressao = elementId;
+      document.getElementById("modal-doacao").classList.add("active");
+    }
+
+    function fecharModalDoacao() {
+      document.getElementById("modal-doacao").classList.remove("active");
+    }
+
+    function copiarPixModal() {
+      const pixCode = "00020126680014BR.GOV.BCB.PIX0136d3a939c9-f2ee-4eb1-9b04-dc5258422b5f0206Doacao5204000053039865802BR5917Clauston De Souza6009Sao Paulo62140510SiteRecibo63040141";
+      navigator.clipboard.writeText(pixCode).then(() => {
+        const btn = event.target;
+        const orig = btn.textContent;
+        btn.textContent = "✓ Copiado!";
+        setTimeout(() => btn.textContent = orig, 2000);
+      }).catch(err => {
+        console.error('Erro ao copiar:', err);
+      });
+    }
+
+    function prosseguirImpressao() {
+      const idParaImprimir = elementoParaImpressao;
+      if (!idParaImprimir) return;
+      const modal = document.getElementById("modal-doacao");
+      modal.style.display = 'none'; 
+      modal.classList.remove("active");
+      printElement(idParaImprimir); 
+      setTimeout(() => { modal.style.display = ''; }, 500); 
+    }
+
+    function printElement(elementId) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      document.querySelectorAll('.print-target').forEach(el => el.classList.remove('print-target'));
+      element.classList.add('print-target');
+      window.print();
+      setTimeout(() => element.classList.remove('print-target'), 1000);
+    }
+
+    async function previewWord(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+            
+            document.getElementById('word-preview-content').innerHTML = result.value;
+            document.getElementById('word-preview-wrapper').style.display = 'block';
+            document.getElementById('word-actions').style.display = 'block';
+            
+        } catch (err) {
+            console.error("Erro ao processar .docx:", err);
+            alert('Erro ao ler o arquivo. Verifique se é um .docx válido.');
+        }
+    }
+
+    function downloadWordAsPdf() {
+        const element = document.getElementById("word-preview-content");
+        const originalStyle = element.getAttribute('style') || '';
+        
+        element.style.background = '#ffffff';
+        element.style.color = '#000000';
+        element.style.padding = '20mm';
+        element.style.width = '210mm';
+        element.style.minHeight = 'auto';
+        element.style.overflow = 'visible';
+
+        const opt = {
+            margin: 0,
+            filename: 'documento-word.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 3, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().from(element).set(opt).save().then(() => {
+            element.setAttribute('style', originalStyle);
+        });
+    }
+
+    function numExtenso(n) {
+      const u = ["","um","dois","três","quatro","cinco","seis","sete","oito","nove"];
+      const c = ["","cento","duzentos","trezentos","quatrocentos","quinhentos","seiscentos","setecentos","oitocentos","novecentos"];
+      const dd = ["dez","onze","doze","treze","quatorze","quinze","dezesseis","dezessete","dezoito","dezenove"];
+      const dz = ["","","vinte","trinta","quarenta","cinquenta","sessenta","setenta","oitenta","noventa"];
+      let t = ""; const r = Math.floor(n); const cv = Math.round((n-r)*100);
+      if(r===0) t="zero"; else {
+        if(r===100) t+="cem"; else {
+          const cc=Math.floor(r/100); const d=Math.floor((r%100)/10); const uu=r%10;
+          if(cc>0) t+=c[cc]; if((cc>0&&(d>0||uu>0))) t+=" e ";
+          if(d===1) t+=dd[uu]; else { if(d>0) t+=dz[d]; if(d>0&&uu>0) t+=" e "; if(d!==1&&uu>0) t+=u[uu]; }
+        }
+      }
+      t += (r===1 ? " real" : " reais");
+      if(cv>0) { t += " e " + (cv<10?"zero ":"") + cv + " centavo" + (cv>1?"s":""); }
+      return t;
+    }
+
+    let imagensSelecionadas = [];
+    let draggedImgIndex = null;
+    let quebrasPagina = []; 
+
+    function handleImgSelect(input) {
+      if (input.files && input.files.length > 0) {
+        carregarImagens(input.files);
+      }
+    }
+
+    function handleImgDrop(e) {
+      e.preventDefault();
+      const dropZone = document.querySelector('#tool-imagens .drop-zone');
+      dropZone.style.borderColor = '';
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        carregarImagens(e.dataTransfer.files);
+      }
+    }
+
+    async function carregarImagens(files) {
+      const progressContainer = document.getElementById('imgProgressContainer');
+      const progressBar = document.getElementById('imgProgressBar');
+      
+      progressContainer.style.display = 'block';
+      progressBar.style.width = '0%';
+      
+      const fileList = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (fileList.length === 0) {
+        progressContainer.style.display = 'none';
+        alert('Por favor, selecione apenas arquivos de imagem.');
+        return;
+      }
+      
+      const total = fileList.length;
+      
+      for (let i = 0; i < total; i++) {
+        const file = fileList[i];
+        const dataUrl = await lerArquivoComoDataUrl(file);
+        const dims = await obterDimensoesImagem(dataUrl);
+        imagensSelecionadas.push({
+          id: Date.now() + '-' + Math.random(),
+          src: dataUrl,
+          name: file.name,
+          width: dims.width,
+          height: dims.height
+        });
+        
+        const pct = Math.round(((i + 1) / total) * 100);
+        progressBar.style.width = pct + '%';
+        
+        await new Promise(r => setTimeout(r, 60));
+      }
+      
+      setTimeout(() => {
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+      }, 400);
+      
+      renderizarImagens();
+      document.getElementById('imgInput').value = '';
+    }
+
+    function obterDimensoesImagem(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        img.onerror = () => resolve({ width: 0, height: 0 });
+        img.src = src;
+      });
+    }
+
+    function lerArquivoComoDataUrl(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderizarImagens() {
+      sincronizarQuebras();
+      const grid = document.getElementById('imgPreviewGrid');
+      grid.innerHTML = '';
+      
+      imagensSelecionadas.forEach((img, idx) => {
+        const card = document.createElement('div');
+        card.className = 'img-card';
+        card.draggable = true;
+        
+        card.addEventListener('dragstart', (e) => {
+          draggedImgIndex = idx;
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          draggedImgIndex = null;
+        });
+        
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault();
+        });
+        
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          if (draggedImgIndex !== null && draggedImgIndex !== idx) {
+            const item = imagensSelecionadas.splice(draggedImgIndex, 1)[0];
+            imagensSelecionadas.splice(idx, 0, item);
+            renderizarImagens();
+          }
+        });
+        
+        card.innerHTML = `
+          <span class="img-index">${idx + 1}</span>
+          <button class="delete-img" onclick="removerImagem(${idx}); event.stopPropagation();">×</button>
+          <img src="${img.src}" alt="${img.name}">
+          <div class="reorder-controls" onclick="event.stopPropagation();">
+            <button class="reorder-btn" onclick="reordenarImagem(${idx}, -1)" ${idx === 0 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : ''}>◀</button>
+            <button class="reorder-btn" onclick="reordenarImagem(${idx}, 1)" ${idx === imagensSelecionadas.length - 1 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : ''}>▶</button>
+          </div>
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
+    function removerImagem(idx) {
+      imagensSelecionadas.splice(idx, 1);
+      renderizarImagens();
+    }
+
+    function reordenarImagem(idx, direcao) {
+      const targetIdx = idx + direcao;
+      if (targetIdx < 0 || targetIdx >= imagensSelecionadas.length) return;
+      const item = imagensSelecionadas.splice(idx, 1)[0];
+      imagensSelecionadas.splice(targetIdx, 0, item);
+      renderizarImagens();
+    }
+
+    function sincronizarQuebras() {
+      const necessario = Math.max(0, imagensSelecionadas.length - 1);
+      while (quebrasPagina.length < necessario) quebrasPagina.push(true); 
+      while (quebrasPagina.length > necessario) quebrasPagina.pop();
+    }
+
+    function agruparImagensPorPagina() {
+      sincronizarQuebras();
+      const grupos = [];
+      if (imagensSelecionadas.length === 0) return grupos;
+      let atual = [imagensSelecionadas[0]];
+      for (let i = 0; i < imagensSelecionadas.length - 1; i++) {
+        if (quebrasPagina[i]) {
+          grupos.push(atual);
+          atual = [imagensSelecionadas[i + 1]];
+        } else {
+          atual.push(imagensSelecionadas[i + 1]);
+        }
+      }
+      grupos.push(atual);
+      return grupos;
+    }
+
+    function abrirAjustePagina() {
+      if (imagensSelecionadas.length === 0) {
+        alert('Adicione pelo menos uma imagem antes de ajustar as páginas.');
+        return;
+      }
+      renderizarAjustePagina();
+      document.getElementById('modal-ajuste-pagina').classList.add('active');
+    }
+
+    function fecharModalAjustePagina() {
+      document.getElementById('modal-ajuste-pagina').classList.remove('active');
+    }
+
+    function quebrarTodas() {
+      sincronizarQuebras();
+      quebrasPagina = quebrasPagina.map(() => true);
+      renderizarAjustePagina();
+    }
+
+    function juntarTodas() {
+      sincronizarQuebras();
+      quebrasPagina = quebrasPagina.map(() => false);
+      renderizarAjustePagina();
+    }
+
+    function alternarQuebra(i) {
+      quebrasPagina[i] = !quebrasPagina[i];
+      renderizarAjustePagina();
+    }
+
+    function renderizarAjustePagina() {
+      sincronizarQuebras();
+      const list = document.getElementById('ajustePaginaList');
+      list.innerHTML = '';
+
+      imagensSelecionadas.forEach((img, idx) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:0.75rem; padding:0.4rem 0;';
+        row.innerHTML = `
+          <div style="width:48px;height:48px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fafafa;">
+            <img src="${img.src}" style="max-width:100%;max-height:100%;object-fit:contain;">
+          </div>
+          <div style="font-size:0.85rem;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${idx + 1}. ${img.name}</div>
+        `;
+        list.appendChild(row);
+
+        if (idx < imagensSelecionadas.length - 1) {
+          const isBreak = quebrasPagina[idx];
+          const divisor = document.createElement('button');
+          divisor.type = 'button';
+          divisor.style.cssText = `display:flex; align-items:center; gap:0.5rem; width:100%; border:none; background:none; cursor:pointer; padding:0.4rem 0 0.4rem 60px; font-size:0.75rem; font-weight:700; color:${isBreak ? 'var(--primary)' : '#107c10'};`;
+          divisor.innerHTML = isBreak
+            ? `<span style="flex:1;border-top:2px solid var(--primary);"></span>✂️ Nova página<span style="flex:1;border-top:2px solid var(--primary);"></span>`
+            : `<span style="flex:1;border-top:2px dashed #107c10;"></span>🔗 Mesma página<span style="flex:1;border-top:2px dashed #107c10;"></span>`;
+          divisor.onclick = () => alternarQuebra(idx);
+          list.appendChild(divisor);
+        }
+      });
+
+      const grupos = agruparImagensPorPagina();
+      document.getElementById('ajustePaginaInfo').textContent = `📄 Total de páginas no PDF: ${grupos.length} (de ${imagensSelecionadas.length} imagem${imagensSelecionadas.length === 1 ? '' : 's'})`;
+    }
+
+    async function gerarImagensPdf() {
+      if (imagensSelecionadas.length === 0) {
+        alert('Por favor, adicione pelo menos uma imagem para gerar o PDF.');
+        return;
+      }
+      
+      const orientacao = document.getElementById('imgOrientacao').value;
+      const ajuste = document.getElementById('imgAjuste').value;
+      
+      const printArea = document.getElementById('img-print-area');
+      printArea.innerHTML = '';
+
+      const grupos = agruparImagensPorPagina();
+      const gap_mm = ajuste === 'preencher' ? 0 : 4;
+      const folga_mm = ajuste === 'preencher' ? 0 : 2; 
+      
+      for (let g = 0; g < grupos.length; g++) {
+        const grupo = grupos[g];
+        const pageDiv = document.createElement('div');
+        pageDiv.className = `print-page-image`;
+        pageDiv.style.display = 'flex';
+        pageDiv.style.flexDirection = 'column';
+        pageDiv.style.alignItems = 'center';
+        pageDiv.style.justifyContent = 'flex-start';
+        pageDiv.style.gap = gap_mm + 'mm';
+        pageDiv.style.pageBreakAfter = g < grupos.length - 1 ? 'always' : 'avoid';
+        
+        let isLandscapeLocal = false;
+        if (orientacao === 'paisagem') {
+           isLandscapeLocal = true;
+        } else if (orientacao === 'automatico') {
+           isLandscapeLocal = (grupo[0].width && grupo[0].height) ? grupo[0].width > grupo[0].height : false;
+        }
+
+        const containerW_mm = (isLandscapeLocal ? (ajuste === 'preencher' ? 296 : 266) : (ajuste === 'preencher' ? 209 : 179)) - folga_mm;
+        const containerH_mm = (isLandscapeLocal ? (ajuste === 'preencher' ? 209 : 179) : (ajuste === 'preencher' ? 296 : 266)) - folga_mm;
+        const n = grupo.length;
+        const slotH_mm = (containerH_mm - (n - 1) * gap_mm) / n;
+
+        for (let k = 0; k < n; k++) {
+          const img = grupo[k];
+          const imgEl = document.createElement('img');
+          imgEl.style.display = 'block';
+          imgEl.style.pageBreakInside = 'avoid';
+          await new Promise(resolve => {
+              imgEl.onload = resolve;
+              imgEl.src = img.src;
+          });
+
+          if (ajuste === 'preencher') {
+             imgEl.style.width = containerW_mm + 'mm';
+             imgEl.style.height = slotH_mm + 'mm';
+             imgEl.style.objectFit = 'cover';
+          } else {
+             const ratio = Math.min(containerW_mm / imgEl.naturalWidth, slotH_mm / imgEl.naturalHeight);
+             imgEl.style.width = (imgEl.naturalWidth * ratio) + 'mm';
+             imgEl.style.height = (imgEl.naturalHeight * ratio) + 'mm';
+             imgEl.style.maxWidth = containerW_mm + 'mm';
+             imgEl.style.maxHeight = slotH_mm + 'mm';
+          }
+          
+          pageDiv.appendChild(imgEl);
+        }
+        printArea.appendChild(pageDiv);
+      }
+      
+      aplicarEstiloPrintImagens(orientacao, ajuste);
+      mostrarModalDoacao('img-print-area');
+    }
+
+    function aplicarEstiloPrintImagens(orientacao, ajuste) {
+      let styleEl = document.getElementById('dynamic-print-style');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'dynamic-print-style';
+        document.head.appendChild(styleEl);
+      }
+      
+      let pageOrientation = 'portrait';
+      if (orientacao === 'paisagem') {
+        pageOrientation = 'landscape';
+      } else if (orientacao === 'automatico' && imagensSelecionadas.length > 0) {
+        const primeira = imagensSelecionadas[0];
+        if (primeira.width && primeira.height && primeira.width > primeira.height) {
+          pageOrientation = 'landscape';
+        }
+      }
+      
+      const isLandscape = pageOrientation === 'landscape';
+      const marginStyle = '0'; // FORÇA MARGEM 0 PARA REMOVER RODAPÉ DO NAVEGADOR
+      
+      let maxH, maxW;
+      maxH = isLandscape ? '210mm' : '297mm';
+      maxW = isLandscape ? '297mm' : '210mm';
+      
+      styleEl.innerHTML = `
+        @media print {
+          @page {
+            size: A4 ${pageOrientation};
+            margin: ${marginStyle};
+          }
+          .print-page-image {
+            height: ${maxH} !important;
+            width: ${maxW} !important;
+            max-height: ${maxH} !important;
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          .print-page-image.fit-contain img {
+            max-height: ${maxH} !important;
+            max-width: ${maxW} !important;
+          }
+          .print-page-image.fit-cover img {
+            height: ${maxH} !important;
+            width: ${maxW} !important;
+          }
+        }
+      `;
+    }
+
+    async function abrirPreviewPdf() {
+      try {
+        if (imagensSelecionadas.length === 0) {
+          alert('Por favor, adicione pelo menos uma imagem para visualizar.');
+          return;
+        }
+        document.getElementById('modal-preview-pdf').classList.add('active');
+        const loadingEl = document.getElementById('loadingPreview');
+        loadingEl.style.display = 'flex';
+        loadingEl.innerHTML = '<p style="font-weight: 600; color: var(--primary);">Gerando pré-visualização...</p>';
+        
+        const orientacao = document.getElementById('imgOrientacao').value;
+        const ajuste = document.getElementById('imgAjuste').value;
+        
+        let finalOrientation = 'portrait';
+        if (orientacao === 'paisagem') finalOrientation = 'landscape';
+        else if (orientacao === 'automatico' && imagensSelecionadas.length > 0) {
+          const primeira = imagensSelecionadas[0];
+          if (primeira.width && primeira.height && primeira.width > primeira.height) finalOrientation = 'landscape';
+        }
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: finalOrientation,
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        const grupos = agruparImagensPorPagina();
+        const gap_mm = ajuste === 'preencher' ? 0 : 4;
+        const margin_mm = 15; 
+
+        for (let g = 0; g < grupos.length; g++) {
+          const grupo = grupos[g];
+          const pageDiv = document.createElement('div');
+          
+          let isLandscapeLocal = false;
+          if (orientacao === 'paisagem') {
+             isLandscapeLocal = true;
+          } else if (orientacao === 'automatico') {
+             isLandscapeLocal = (grupo[0].width && grupo[0].height) ? grupo[0].width > grupo[0].height : false;
+          }
+
+          const pageW = isLandscapeLocal ? 297 : 210;
+          const pageH = isLandscapeLocal ? 210 : 297;
+          
+          pageDiv.style.width = pageW + 'mm';
+          pageDiv.style.height = pageH + 'mm';
+          pageDiv.style.background = 'white';
+          pageDiv.style.display = 'flex';
+          pageDiv.style.flexDirection = 'column';
+          pageDiv.style.alignItems = 'center';
+          pageDiv.style.justifyContent = 'flex-start';
+          pageDiv.style.gap = gap_mm + 'mm';
+          pageDiv.style.padding = margin_mm + 'mm'; 
+          pageDiv.style.boxSizing = 'border-box';
+          pageDiv.style.overflow = 'hidden';
+          
+          pageDiv.style.position = 'fixed';
+          pageDiv.style.left = '-9999px';
+          pageDiv.style.top = '0';
+          
+          document.body.appendChild(pageDiv);
+          
+          const containerW_mm = pageW - (margin_mm * 2);
+          const containerH_mm = pageH - (margin_mm * 2);
+          const n = grupo.length;
+          const slotH_mm = (containerH_mm - (n - 1) * gap_mm) / n;
+
+          for (let k = 0; k < n; k++) {
+            const img = grupo[k];
+            const imgEl = document.createElement('img');
+            imgEl.style.display = 'block';
+            await new Promise(resolve => {
+                imgEl.onload = resolve;
+                imgEl.src = img.src;
+            });
+
+            if (ajuste === 'preencher') {
+               imgEl.style.width = containerW_mm + 'mm';
+               imgEl.style.height = slotH_mm + 'mm';
+               imgEl.style.objectFit = 'cover';
+            } else {
+               const ratio = Math.min(containerW_mm / imgEl.naturalWidth, slotH_mm / imgEl.naturalHeight);
+               imgEl.style.width = (imgEl.naturalWidth * ratio) + 'mm';
+               imgEl.style.height = (imgEl.naturalHeight * ratio) + 'mm';
+               imgEl.style.maxWidth = containerW_mm + 'mm';
+               imgEl.style.maxHeight = slotH_mm + 'mm';
+            }
+            
+            pageDiv.appendChild(imgEl);
+          }
+          
+          await new Promise(r => setTimeout(r, 50));
+          
+          const canvas = await html2canvas(pageDiv, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            width: pageDiv.offsetWidth,
+            height: pageDiv.offsetHeight,
+            windowWidth: pageDiv.scrollWidth,
+            windowHeight: pageDiv.scrollHeight
+          });
+          
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          
+          if (g > 0) pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
+          
+          document.body.removeChild(pageDiv);
+        }
+        
+        const pdfBlob = pdf.output('blob');
+        const pdfBlobUrl = URL.createObjectURL(pdfBlob);
+        
+        const frame = document.getElementById('pdfPreviewFrame');
+        frame.src = pdfBlobUrl;
+        
+        loadingEl.style.display = 'none';
+        
+      } catch (error) {
+        console.error("Erro crítico ao gerar preview:", error);
+        const loadingEl = document.getElementById('loadingPreview');
+        loadingEl.innerHTML = `<p style="color:red; font-weight:bold; font-size: 1rem;">Erro ao gerar preview:<br><span style="font-size:0.8rem; font-weight:normal;">${error.message}</span></p>`;
+      }
+    }
+
+    function fecharModalPreviewPdf() {
+      document.getElementById('modal-preview-pdf').classList.remove('active');
+      document.getElementById('pdfPreviewFrame').src = '';
+    }
+
+    // FUNÇÃO DO BOTÃO FLUTUANTE (CELULAR)
+    function imprimirFerramentaAtual() {
+      if (document.getElementById('tool-recibo').classList.contains('active')) {
+        mostrarModalDoacao('recibo-preview');
+      } else if (document.getElementById('tool-word').classList.contains('active')) {
+        mostrarModalDoacao('word-preview-content');
+      } else if (document.getElementById('tool-imagens').classList.contains('active')) {
+        gerarImagensPdf(); // Gera a área de impressão e chama o modal
+      } else {
+        alert('Abra uma ferramenta primeiro!');
+      }
+    }
+
+    atualizarPreview();
+    document.querySelectorAll('#tool-recibo input').forEach(i => i.addEventListener('input', atualizarPreview));
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -232,6 +232,31 @@
       border-radius: 2px;
     }
     .close-modal:hover { background: #f3f2f1; color: var(--text); }
+
+    /* ===== AJUSTE FINO DE IMAGENS ===== */
+    .modal-ajuste-fino .modal { max-width: 640px; }
+    .af-paginacao { display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.9rem; }
+    .af-paginacao button { background:none; border:1px solid var(--border); border-radius: var(--radius); padding:0.35rem 0.7rem; cursor:pointer; font-weight:600; color: var(--primary); }
+    .af-paginacao button:disabled { opacity:0.35; cursor:not-allowed; }
+    .af-paginacao span { font-size:0.85rem; font-weight:600; color: var(--text); }
+    .af-sheet-wrap { display:flex; justify-content:center; background: var(--bg); border:1px solid var(--border-light); border-radius: var(--radius); padding: 1rem 0; margin-bottom: 1.1rem; overflow:auto; }
+    .af-sheet { position:relative; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,0.12); flex-shrink:0; }
+    .af-sheet-img { position:absolute; box-sizing:border-box; border:1px dashed var(--primary); background-size: cover; background-position:center; overflow:hidden; }
+    .af-sheet-img img { width:100%; height:100%; object-fit:contain; display:block; }
+    .af-sheet-img .af-tag { position:absolute; top:2px; left:2px; background:var(--primary); color:#fff; font-size:0.62rem; font-weight:700; padding:1px 5px; border-radius:2px; line-height:1.4; }
+    .af-sheet-img.af-overflow { border-color:#B5522F; }
+    .af-lista { display:flex; flex-direction:column; gap:0.9rem; max-height:32vh; overflow-y:auto; padding-right:0.35rem; }
+    .af-item { border:1px solid var(--border-light); border-radius: var(--radius); padding:0.7rem 0.85rem; background:#fafafa; }
+    .af-item-head { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.55rem; }
+    .af-item-head img { width:34px; height:34px; object-fit:contain; border:1px solid var(--border); border-radius:2px; background:#fff; flex-shrink:0; }
+    .af-item-head .af-nome { font-size:0.8rem; font-weight:600; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .af-item-head button { background:none; border:none; color:var(--primary); font-size:0.72rem; font-weight:700; cursor:pointer; text-decoration:underline; flex-shrink:0; }
+    .af-slider-row { display:flex; align-items:center; gap:0.6rem; font-size:0.78rem; color:var(--text-light); margin-bottom:0.4rem; }
+    .af-slider-row label { width:96px; flex-shrink:0; font-weight:600; color:var(--text); }
+    .af-slider-row input[type="range"] { flex:1; accent-color: var(--primary); }
+    .af-slider-row .af-valor { width:44px; text-align:right; font-weight:700; color:var(--primary); flex-shrink:0; }
+    .af-aviso { font-size:0.75rem; color:#B5522F; font-weight:600; margin-top:0.5rem; }
+    /* ===== FIM AJUSTE FINO ===== */
     .pix-box { background: #f3f9f1; border: 1px solid #d4e8ce; padding: 1.25rem; border-radius: var(--radius); margin: 1.5rem 0; }
     .pix-code { background: #f3f2f1; padding: 0.85rem; border-radius: var(--radius); font-family: monospace; font-size: 0.65rem; word-break: break-all; margin: 0.75rem 0; color: #323130; border: 1px solid var(--border); max-height: 120px; overflow-y: auto; }
     .btn-pix { background: #107c10; color: white; width: 100%; margin-bottom: 0.75rem; font-weight: 600; border-color: #107c10; }
@@ -468,7 +493,10 @@
   <header>
     <h1><a href="#" onclick="showHome()">📄 PDF Tools</a></h1>
     <!-- ADICIONADO ID PARA CONTROLAR A VISIBILIDADE -->
-    <a id="btn-voltar-menu" onclick="showHome()" style="display: none;">← Voltar ao Menu</a>
+    <div style="display:flex; align-items:center; gap:0.25rem;">
+      <a id="btn-voltar-menu" onclick="showHome()" style="display: none;">← Voltar ao Menu</a>
+      <a id="btn-voltar-site" href="landing-page-pdf-tools.html">← Voltar ao site</a>
+    </div>
   </header>
 
   <div class="container">
@@ -609,6 +637,7 @@
         </div>
         <div class="actions" style="margin-top: 0; flex-wrap: wrap;">
           <button class="btn btn-secondary" style="flex: 1;" onclick="abrirAjustePagina()">📐 Ajustar Páginas</button>
+          <button class="btn btn-secondary" style="flex: 1;" onclick="abrirAjusteFino()">🎛️ Ajuste Fino</button>
           <button class="btn btn-secondary" style="flex: 1;" onclick="abrirPreviewPdf()">👁️ Pré-visualizar PDF</button>
           <button class="btn btn-primary" style="flex: 1;" onclick="gerarImagensPdf()">🖨️ Gerar PDF Completo</button>
         </div>
@@ -664,6 +693,33 @@
     </div>
   </div>
 
+  <!-- MODAL DE AJUSTE FINO (TAMANHO E POSIÇÃO DE CADA IMAGEM) -->
+  <div id="modal-ajuste-fino" class="modal-overlay modal-ajuste-fino">
+    <div class="modal">
+      <button class="close-modal" onclick="fecharModalAjusteFino()">×</button>
+      <h3 style="margin-bottom: 0.35rem; font-size: 1.15rem; font-weight: 600; color: var(--text);">🎛️ Ajuste Fino de Imagens</h3>
+      <p style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 1rem;">Ajuste o <strong>tamanho</strong> e o <strong>espaço acima</strong> de cada imagem para afastá-la do topo ou evitar espaços vazios que empurram conteúdo para uma nova página.</p>
+
+      <div class="af-paginacao">
+        <button id="afBtnAnterior" onclick="mudarPaginaAjusteFino(-1)">◀ Anterior</button>
+        <span id="afPaginaLabel">Página 1 de 1</span>
+        <button id="afBtnProxima" onclick="mudarPaginaAjusteFino(1)">Próxima ▶</button>
+      </div>
+
+      <div class="af-sheet-wrap">
+        <div id="afSheet" class="af-sheet"></div>
+      </div>
+      <div id="afAviso" class="af-aviso" style="display:none;"></div>
+
+      <div id="afLista" class="af-lista" style="margin-top:1rem;"></div>
+
+      <div class="actions" style="margin-top: 1.5rem;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="resetarAjusteFinoPagina()">↺ Resetar Página</button>
+      </div>
+      <button class="btn btn-primary" style="width: 100%; margin-top: 0.75rem;" onclick="fecharModalAjusteFino()">Concluído</button>
+    </div>
+  </div>
+
   <!-- MODAL DE PREVIEW DE PDF -->
   <div id="modal-preview-pdf" class="modal-overlay">
     <div class="modal" style="width: 95%; max-width: 800px; height: 90vh; display: flex; flex-direction: column;">
@@ -703,6 +759,15 @@
       document.getElementById('btn-voltar-menu').style.display = 'inline-block'; // MOSTRA O BOTÃO NAS FERRAMENTAS
       window.scrollTo({top: 0, behavior: 'smooth'});
     }
+
+    // ABRE DIRETO A FERRAMENTA ESCOLHIDA QUANDO SE CHEGA PELA LANDING PAGE (ex: index.html?tool=recibo)
+    (function abrirFerramentaViaURL() {
+      const params = new URLSearchParams(window.location.search);
+      const tool = params.get('tool');
+      if (tool && document.getElementById(`tool-${tool}`)) {
+        openTool(tool);
+      }
+    })();
 
     function mascaraDoc(i) {
       let v = i.value.replace(/\D/g, "");
@@ -897,7 +962,9 @@
           src: dataUrl,
           name: file.name,
           width: dims.width,
-          height: dims.height
+          height: dims.height,
+          ajusteEscala: 1,       // 1 = 100% (tamanho calculado automaticamente)
+          ajusteMargemTopo: 0    // mm extras de espaço acima da imagem
         });
         
         const pct = Math.round(((i + 1) / total) * 100);
@@ -1016,6 +1083,63 @@
       return grupos;
     }
 
+    // ===== AJUSTE FINO: cálculo compartilhado de tamanho/posição =====
+    // Calcula o tamanho final de UMA imagem já considerando a escala manual do usuário.
+    // Usado tanto na pré-visualização do Ajuste Fino quanto na geração real do PDF/impressão,
+    // garantindo que o que o usuário vê no ajuste seja exatamente o que sai no PDF.
+    function calcularTamanhoImagemFinal(img, containerW_mm, slotH_mm, ajusteModo) {
+      const escala = img.ajusteEscala || 1;
+      let width_mm, height_mm;
+      if (ajusteModo === 'preencher') {
+        width_mm = containerW_mm * escala;
+        height_mm = slotH_mm * escala;
+      } else {
+        const naturalW = img.width || 1;
+        const naturalH = img.height || 1;
+        const ratio = Math.min(containerW_mm / naturalW, slotH_mm / naturalH);
+        width_mm = naturalW * ratio * escala;
+        height_mm = naturalH * ratio * escala;
+      }
+      // Evita que a imagem estoure lateralmente para fora da página
+      width_mm = Math.min(width_mm, containerW_mm);
+      return { width_mm, height_mm };
+    }
+
+    // Calcula a posição (top) de cada imagem de uma página, considerando a margem
+    // extra que o usuário adicionou manualmente acima de cada uma (ajusteMargemTopo).
+    function calcularLayoutPagina(grupo, containerW_mm, containerH_mm, gap_mm, ajusteModo) {
+      const n = grupo.length;
+      const slotH_mm = (containerH_mm - (n - 1) * gap_mm) / n;
+      let cursorY = 0;
+      const itens = [];
+      grupo.forEach((img) => {
+        const extraTopo = img.ajusteMargemTopo || 0;
+        cursorY += extraTopo;
+        const { width_mm, height_mm } = calcularTamanhoImagemFinal(img, containerW_mm, slotH_mm, ajusteModo);
+        itens.push({ img, top_mm: cursorY, width_mm, height_mm, slotH_mm });
+        cursorY += height_mm + gap_mm;
+      });
+      return { itens, alturaTotal_mm: Math.max(0, cursorY - gap_mm) };
+    }
+
+    // Recalcula as dimensões do "container" (área útil) de uma página, replicando
+    // a mesma lógica usada em gerarImagensPdf/abrirPreviewPdf.
+    function calcularContainerPagina(grupo, orientacao, ajuste) {
+      let isLandscapeLocal = false;
+      if (orientacao === 'paisagem') {
+        isLandscapeLocal = true;
+      } else if (orientacao === 'automatico') {
+        isLandscapeLocal = (grupo[0].width && grupo[0].height) ? grupo[0].width > grupo[0].height : false;
+      }
+      const gap_mm = ajuste === 'preencher' ? 0 : 4;
+      const folga_mm = ajuste === 'preencher' ? 0 : 2;
+      const pageW_mm = isLandscapeLocal ? 297 : 210;
+      const pageH_mm = isLandscapeLocal ? 210 : 297;
+      const containerW_mm = (isLandscapeLocal ? (ajuste === 'preencher' ? 296 : 266) : (ajuste === 'preencher' ? 209 : 179)) - folga_mm;
+      const containerH_mm = (isLandscapeLocal ? (ajuste === 'preencher' ? 209 : 179) : (ajuste === 'preencher' ? 296 : 266)) - folga_mm;
+      return { isLandscapeLocal, gap_mm, folga_mm, pageW_mm, pageH_mm, containerW_mm, containerH_mm };
+    }
+
     function abrirAjustePagina() {
       if (imagensSelecionadas.length === 0) {
         alert('Adicione pelo menos uma imagem antes de ajustar as páginas.');
@@ -1079,6 +1203,178 @@
       document.getElementById('ajustePaginaInfo').textContent = `📄 Total de páginas no PDF: ${grupos.length} (de ${imagensSelecionadas.length} imagem${imagensSelecionadas.length === 1 ? '' : 's'})`;
     }
 
+    // ===== MODAL DE AJUSTE FINO (tamanho e espaçamento de cada imagem) =====
+    let paginaAjusteFinoAtual = 0;
+
+    function abrirAjusteFino() {
+      if (imagensSelecionadas.length === 0) {
+        alert('Adicione pelo menos uma imagem antes de fazer o ajuste fino.');
+        return;
+      }
+      paginaAjusteFinoAtual = 0;
+      renderizarAjusteFino();
+      document.getElementById('modal-ajuste-fino').classList.add('active');
+    }
+
+    function fecharModalAjusteFino() {
+      document.getElementById('modal-ajuste-fino').classList.remove('active');
+    }
+
+    function mudarPaginaAjusteFino(direcao) {
+      const grupos = agruparImagensPorPagina();
+      const nova = paginaAjusteFinoAtual + direcao;
+      if (nova < 0 || nova >= grupos.length) return;
+      paginaAjusteFinoAtual = nova;
+      renderizarAjusteFino();
+    }
+
+    function renderizarAjusteFino() {
+      const grupos = agruparImagensPorPagina();
+      if (grupos.length === 0) { fecharModalAjusteFino(); return; }
+      if (paginaAjusteFinoAtual >= grupos.length) paginaAjusteFinoAtual = grupos.length - 1;
+      if (paginaAjusteFinoAtual < 0) paginaAjusteFinoAtual = 0;
+
+      const orientacao = document.getElementById('imgOrientacao').value;
+      const ajuste = document.getElementById('imgAjuste').value;
+      const grupo = grupos[paginaAjusteFinoAtual];
+
+      document.getElementById('afPaginaLabel').textContent = `Página ${paginaAjusteFinoAtual + 1} de ${grupos.length}`;
+      document.getElementById('afBtnAnterior').disabled = paginaAjusteFinoAtual === 0;
+      document.getElementById('afBtnProxima').disabled = paginaAjusteFinoAtual === grupos.length - 1;
+
+      const { pageW_mm, pageH_mm, containerW_mm, containerH_mm, gap_mm } = calcularContainerPagina(grupo, orientacao, ajuste);
+      const { itens, alturaTotal_mm } = calcularLayoutPagina(grupo, containerW_mm, containerH_mm, gap_mm, ajuste);
+
+      // Escala em pixels para caber a folha na largura disponível do modal
+      const larguraMaximaPx = 380;
+      const pxPorMm = larguraMaximaPx / pageW_mm;
+
+      const sheet = document.getElementById('afSheet');
+      sheet.style.width = (pageW_mm * pxPorMm) + 'px';
+      sheet.style.height = (pageH_mm * pxPorMm) + 'px';
+      sheet.innerHTML = '';
+
+      const offsetX_mm = (pageW_mm - containerW_mm) / 2;
+      const estourou = alturaTotal_mm > containerH_mm;
+
+      itens.forEach((item, idx) => {
+        const left_mm = offsetX_mm + (containerW_mm - item.width_mm) / 2;
+        const div = document.createElement('div');
+        div.className = 'af-sheet-img' + (item.top_mm + item.height_mm > containerH_mm ? ' af-overflow' : '');
+        div.style.left = (left_mm * pxPorMm) + 'px';
+        div.style.top = (item.top_mm * pxPorMm) + 'px';
+        div.style.width = (item.width_mm * pxPorMm) + 'px';
+        div.style.height = (item.height_mm * pxPorMm) + 'px';
+        div.innerHTML = `<span class="af-tag">${idx + 1}</span><img src="${item.img.src}" alt="${item.img.name}">`;
+        sheet.appendChild(div);
+      });
+
+      const aviso = document.getElementById('afAviso');
+      if (estourou) {
+        aviso.style.display = 'block';
+        aviso.textContent = '⚠️ O conteúdo desta página está maior que o espaço disponível e pode ser cortado ou empurrar itens para a próxima página. Reduza o tamanho ou o espaçamento de alguma imagem.';
+      } else {
+        aviso.style.display = 'none';
+      }
+
+      const lista = document.getElementById('afLista');
+      lista.innerHTML = '';
+      grupo.forEach((img, idxNaPagina) => {
+        const escalaPct = Math.round((img.ajusteEscala || 1) * 100);
+        const margemTopo = img.ajusteMargemTopo || 0;
+        const row = document.createElement('div');
+        row.className = 'af-item';
+        row.innerHTML = `
+          <div class="af-item-head">
+            <img src="${img.src}" alt="${img.name}">
+            <div class="af-nome">${idxNaPagina + 1}. ${img.name}</div>
+            <button type="button">Resetar</button>
+          </div>
+          <div class="af-slider-row">
+            <label>Tamanho</label>
+            <input type="range" min="50" max="150" step="5" value="${escalaPct}">
+            <span class="af-valor">${escalaPct}%</span>
+          </div>
+          <div class="af-slider-row">
+            <label>Espaço acima</label>
+            <input type="range" min="0" max="60" step="2" value="${margemTopo}">
+            <span class="af-valor">${margemTopo}mm</span>
+          </div>
+        `;
+
+        const [inputEscala, inputMargem] = row.querySelectorAll('input[type="range"]');
+        const [valorEscala, valorMargem] = row.querySelectorAll('.af-valor');
+        const btnResetar = row.querySelector('button');
+
+        inputEscala.addEventListener('input', () => {
+          img.ajusteEscala = Number(inputEscala.value) / 100;
+          valorEscala.textContent = inputEscala.value + '%';
+          atualizarSheetAjusteFino();
+        });
+        inputMargem.addEventListener('input', () => {
+          img.ajusteMargemTopo = Number(inputMargem.value);
+          valorMargem.textContent = inputMargem.value + 'mm';
+          atualizarSheetAjusteFino();
+        });
+        btnResetar.addEventListener('click', () => {
+          img.ajusteEscala = 1;
+          img.ajusteMargemTopo = 0;
+          renderizarAjusteFino();
+        });
+
+        lista.appendChild(row);
+      });
+    }
+
+    // Redesenha só a folha de pré-visualização (mais leve que renderizar a lista toda de novo
+    // enquanto o usuário está arrastando um slider).
+    function atualizarSheetAjusteFino() {
+      const grupos = agruparImagensPorPagina();
+      const orientacao = document.getElementById('imgOrientacao').value;
+      const ajuste = document.getElementById('imgAjuste').value;
+      const grupo = grupos[paginaAjusteFinoAtual];
+      if (!grupo) return;
+
+      const { pageW_mm, pageH_mm, containerW_mm, containerH_mm, gap_mm } = calcularContainerPagina(grupo, orientacao, ajuste);
+      const { itens, alturaTotal_mm } = calcularLayoutPagina(grupo, containerW_mm, containerH_mm, gap_mm, ajuste);
+      const larguraMaximaPx = 380;
+      const pxPorMm = larguraMaximaPx / pageW_mm;
+      const offsetX_mm = (pageW_mm - containerW_mm) / 2;
+      const estourou = alturaTotal_mm > containerH_mm;
+
+      const sheet = document.getElementById('afSheet');
+      const divs = sheet.querySelectorAll('.af-sheet-img');
+      itens.forEach((item, idx) => {
+        const div = divs[idx];
+        if (!div) return;
+        const left_mm = offsetX_mm + (containerW_mm - item.width_mm) / 2;
+        div.style.left = (left_mm * pxPorMm) + 'px';
+        div.style.top = (item.top_mm * pxPorMm) + 'px';
+        div.style.width = (item.width_mm * pxPorMm) + 'px';
+        div.style.height = (item.height_mm * pxPorMm) + 'px';
+        div.classList.toggle('af-overflow', item.top_mm + item.height_mm > containerH_mm);
+      });
+
+      const aviso = document.getElementById('afAviso');
+      if (estourou) {
+        aviso.style.display = 'block';
+        aviso.textContent = '⚠️ O conteúdo desta página está maior que o espaço disponível e pode ser cortado ou empurrar itens para a próxima página. Reduza o tamanho ou o espaçamento de alguma imagem.';
+      } else {
+        aviso.style.display = 'none';
+      }
+    }
+
+    function resetarAjusteFinoPagina() {
+      const grupos = agruparImagensPorPagina();
+      const grupo = grupos[paginaAjusteFinoAtual];
+      if (!grupo) return;
+      grupo.forEach(img => {
+        img.ajusteEscala = 1;
+        img.ajusteMargemTopo = 0;
+      });
+      renderizarAjusteFino();
+    }
+
     async function gerarImagensPdf() {
       if (imagensSelecionadas.length === 0) {
         alert('Por favor, adicione pelo menos uma imagem para gerar o PDF.');
@@ -1092,11 +1388,12 @@
       printArea.innerHTML = '';
 
       const grupos = agruparImagensPorPagina();
-      const gap_mm = ajuste === 'preencher' ? 0 : 4;
-      const folga_mm = ajuste === 'preencher' ? 0 : 2; 
       
       for (let g = 0; g < grupos.length; g++) {
         const grupo = grupos[g];
+        const { containerW_mm, containerH_mm, gap_mm } = calcularContainerPagina(grupo, orientacao, ajuste);
+        const { itens } = calcularLayoutPagina(grupo, containerW_mm, containerH_mm, gap_mm, ajuste);
+
         const pageDiv = document.createElement('div');
         pageDiv.className = `print-page-image`;
         pageDiv.style.display = 'flex';
@@ -1105,21 +1402,9 @@
         pageDiv.style.justifyContent = 'flex-start';
         pageDiv.style.gap = gap_mm + 'mm';
         pageDiv.style.pageBreakAfter = g < grupos.length - 1 ? 'always' : 'avoid';
-        
-        let isLandscapeLocal = false;
-        if (orientacao === 'paisagem') {
-           isLandscapeLocal = true;
-        } else if (orientacao === 'automatico') {
-           isLandscapeLocal = (grupo[0].width && grupo[0].height) ? grupo[0].width > grupo[0].height : false;
-        }
 
-        const containerW_mm = (isLandscapeLocal ? (ajuste === 'preencher' ? 296 : 266) : (ajuste === 'preencher' ? 209 : 179)) - folga_mm;
-        const containerH_mm = (isLandscapeLocal ? (ajuste === 'preencher' ? 209 : 179) : (ajuste === 'preencher' ? 296 : 266)) - folga_mm;
-        const n = grupo.length;
-        const slotH_mm = (containerH_mm - (n - 1) * gap_mm) / n;
-
-        for (let k = 0; k < n; k++) {
-          const img = grupo[k];
+        for (let k = 0; k < itens.length; k++) {
+          const { img, width_mm, height_mm } = itens[k];
           const imgEl = document.createElement('img');
           imgEl.style.display = 'block';
           imgEl.style.pageBreakInside = 'avoid';
@@ -1128,18 +1413,11 @@
               imgEl.src = img.src;
           });
 
-          if (ajuste === 'preencher') {
-             imgEl.style.width = containerW_mm + 'mm';
-             imgEl.style.height = slotH_mm + 'mm';
-             imgEl.style.objectFit = 'cover';
-          } else {
-             const ratio = Math.min(containerW_mm / imgEl.naturalWidth, slotH_mm / imgEl.naturalHeight);
-             imgEl.style.width = (imgEl.naturalWidth * ratio) + 'mm';
-             imgEl.style.height = (imgEl.naturalHeight * ratio) + 'mm';
-             imgEl.style.maxWidth = containerW_mm + 'mm';
-             imgEl.style.maxHeight = slotH_mm + 'mm';
-          }
-          
+          imgEl.style.width = width_mm + 'mm';
+          imgEl.style.height = height_mm + 'mm';
+          if (ajuste === 'preencher') imgEl.style.objectFit = 'cover';
+          if (img.ajusteMargemTopo) imgEl.style.marginTop = img.ajusteMargemTopo + 'mm';
+
           pageDiv.appendChild(imgEl);
         }
         printArea.appendChild(pageDiv);
@@ -1277,17 +1555,11 @@
                 imgEl.src = img.src;
             });
 
-            if (ajuste === 'preencher') {
-               imgEl.style.width = containerW_mm + 'mm';
-               imgEl.style.height = slotH_mm + 'mm';
-               imgEl.style.objectFit = 'cover';
-            } else {
-               const ratio = Math.min(containerW_mm / imgEl.naturalWidth, slotH_mm / imgEl.naturalHeight);
-               imgEl.style.width = (imgEl.naturalWidth * ratio) + 'mm';
-               imgEl.style.height = (imgEl.naturalHeight * ratio) + 'mm';
-               imgEl.style.maxWidth = containerW_mm + 'mm';
-               imgEl.style.maxHeight = slotH_mm + 'mm';
-            }
+            const { width_mm, height_mm } = calcularTamanhoImagemFinal(img, containerW_mm, slotH_mm, ajuste);
+            imgEl.style.width = width_mm + 'mm';
+            imgEl.style.height = height_mm + 'mm';
+            if (ajuste === 'preencher') imgEl.style.objectFit = 'cover';
+            if (img.ajusteMargemTopo) imgEl.style.marginTop = img.ajusteMargemTopo + 'mm';
             
             pageDiv.appendChild(imgEl);
           }

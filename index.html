@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -495,7 +495,7 @@
     <!-- ADICIONADO ID PARA CONTROLAR A VISIBILIDADE -->
     <div style="display:flex; align-items:center; gap:0.25rem;">
       <a id="btn-voltar-menu" onclick="showHome()" style="display: none;">← Voltar ao Menu</a>
-      <a id="btn-voltar-site" href="landing-page-pdf-tools.html">← Voltar ao site</a>
+      <a id="btn-voltar-site" href="index.html">← Voltar ao site</a>
     </div>
   </header>
 
@@ -760,7 +760,7 @@
       window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    // ABRE DIRETO A FERRAMENTA ESCOLHIDA QUANDO SE CHEGA PELA LANDING PAGE (ex: index.html?tool=recibo)
+    // ABRE DIRETO A FERRAMENTA ESCOLHIDA QUANDO SE CHEGA PELA LANDING PAGE (ex: ferramenta.html?tool=recibo)
     (function abrirFerramentaViaURL() {
       const params = new URLSearchParams(window.location.search);
       const tool = params.get('tool');
